@@ -1,0 +1,23 @@
+{
+    "transfer help": {
+        "op_id": [
+            744870006,
+            3281272972
+        ],
+        "ans": "\u6307\u4ee4\u683c\u5f0f\u4e3a\uff1atrans to \u8bed\u8a00 \u5f85\u7ffb\u8bd1\u8bed\u53e5\neg: trans to zh-cn I am your replika\n\u5e38\u7528\u8bed\u8a00: \u7b80\u4f53\u4e2d\u6587 zh-cn, \u82f1\u6587 en, \u65e5\u6587 ja, \u97e9\u6587 ko"
+    },
+    "1+1": {
+        "op_id": [
+            744870006,
+            3281272972
+        ],
+        "ans": "\u2468"
+    },
+    "##": {
+        "op_id": [
+            744870006,
+            3281272972
+        ],
+        "ans": "**: \u8bbe\u7f6e\u53d1\u9001\u5185\u5bb9\"##\"\u673a\u5668\u4eba\u81ea\u52a8\u56de\u590d\"**\" \n\u4e0d\u8981\u56de\u7b54##: \u5220\u9664\u81ea\u5b9a\u4e49\u56de\u590d\u8bcd\"##\" \n\u7ba1\u7406\u5458\u6307\u4ee4: \n/mute @\u6210\u5458 xx: \u7981\u8a00\u6307\u5b9a\u6210\u5458xx\u5206\u949f \n/unmute @\u6210\u5458: \u89e3\u9664\u6307\u5b9a\u6210\u5458\u7981\u8a00 \n/kill @\u6210\u5458: \u79fb\u9664\u7fa4\u804a \n/add op @\u6210\u5458: \u6dfb\u52a0\u7ba1\u7406\u5458, \u4e4b\u540e\u8be5\u6210\u5458\u53ef\u4f7f\u7528/log on\u83b7\u53d6\u7eff\u5e3d\u5b50 \n/del op @\u6210\u5458: \u5220\u9664\u7ba1\u7406\u5458 \n/log on: \u7ba1\u7406\u5458\u83b7\u53d6\u7eff\u5e3d\u5b50 \n/log out: \u7ba1\u7406\u5458\u6458\u6389\u7eff\u5e3d\u5b50"
+    }
+}

@@ -1,0 +1,19 @@
+{
+  "botName": "RedBot",
+  "logChat": true,
+  "console": false,
+  "debug": false,
+  "databaseUrl": "sqlite+aiosqlite:///data/database.db",
+  "miraiApiHttp": {
+    "account": 123456789,
+    "host": "http://localhost:8080",
+    "verifyKey": "VerifyKey"
+  },
+  "admin": {
+    "masterId": 731347477,
+    "masterName": "Red_lnn",
+    "admins": [
+      731347477
+    ]
+  }
+}
