@@ -14,3 +14,7 @@ https://github.com/djkcyl/ABot-Graia
 https://github.com/SAGIRI-kawaii/sagiri-bot
 
 https://github.com/Redlnn/redbot
+
+幻影坦克部分
+
+https://github.com/jimieguang/colorful-tank

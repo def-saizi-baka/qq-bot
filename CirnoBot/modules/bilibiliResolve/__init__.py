@@ -47,7 +47,7 @@ from .util.path import root_path
 
 channel = Channel.current()
 
-channel.meta['name'] = 'B站视频信息获取'
+channel.meta['name'] = 'B站解析'
 channel.meta['author'] = ['Red_lnn']
 channel.meta['description'] = (
     '识别群内的B站链接、分享、av号、BV号并获取其对应的视频的信息\n'

@@ -203,7 +203,7 @@ async def del_op(app: Ariadne, message: MessageChain,  group: Group, member: Mem
     message_str_list = message.get(Plain)
     message_text = MessageChain(message_str_list)
     # 去除前后空格与@的字符串
-    message_str = (message_text).strip()
+    message_str = (str(message_text)).strip()
     # 格式化后的字符串等于添加管理员指令 并且 有@ 说明触发了指令
     if(message_str == add_op_cmd and message.has(At)):
         # 判断权限 只有root才能设置

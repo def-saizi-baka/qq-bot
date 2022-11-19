@@ -39,13 +39,14 @@ re_switch_pattern = f"({__OPEN__})|({__CLOSE__})"
 
 @listen(GroupMessage)
 @decorate(MatchRegex(regex=re_cmd_pattern, full= False))
-async def setSpecialName(app: Ariadne, message: MessageChain, group: Group, member: Member):
+async def setSpecialName(app: Ariadne, message: MessageChain, group: Group):
     # 开关限制
     if(group.id not in config_info["on"]):
         await app.send_group_message(group, MessageChain(f"该服务暂未开启, 请发送 {__OPEN__} 开启服务"))
         return
     # 获取除去@的部分
     message_plain = str(MessageChain(message.get(Plain))).replace(' ', '')
+    print(f'[info]: 检测到{re_cmd_pattern}, plain: {message_plain}')
 
     # 查找关键词
     if(message_plain.find(set_sp_cmd) == 0 or message_plain.find(set_nk_cmd)==0):

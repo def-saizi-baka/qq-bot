@@ -5,6 +5,7 @@ from graia.ariadne.message.chain import MessageChain
 from graia.ariadne.model import Group, Member
 from graia.ariadne.message.element import At, Plain
 from graia.ariadne.event.mirai import MemberJoinEvent, MemberJoinRequestEvent
+from graia.ariadne.event.message import GroupMessage
 from graia.saya import Channel
 from graia.saya.builtins.broadcast.schema import ListenerSchema
 from graia.ariadne.util.saya import decorate, dispatch, listen
@@ -65,3 +66,38 @@ async def procesing_joinRequest(app: Ariadne, event: MemberJoinRequestEvent):
             await event.accept()
         else:
             return
+
+# 模块开关
+@listen(GroupMessage)
+@decorate(MatchRegex(regex=re_switch_pattern))
+async def chuoyichuoSwitch(app: Ariadne, message: MessageChain, group: Group):
+    cmd = str(message)
+    group_id = group.id
+    # 开启指令
+    if(cmd == __OPEN__):
+        if(group_id in config_info['on']):
+            await app.send_group_message(
+                group_id, MessageChain(f"{__name__}已经开启啦")
+            )
+        else:
+            config_info['on'].append(group_id)
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(config_info))
+
+            await app.send_group_message(
+                group_id, MessageChain(f"{__name__}开启成功")
+            )    
+    # 关闭指令
+    else:
+        if(group_id not in config_info['on']):
+            await app.send_group_message(
+                group_id, MessageChain(f"{__name__}已经关闭啦")
+            )
+        else:
+            config_info['on'].remove(group_id)
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(config_info))
+
+            await app.send_group_message(
+                group_id, MessageChain(f"{__name__}关闭成功")
+            )
