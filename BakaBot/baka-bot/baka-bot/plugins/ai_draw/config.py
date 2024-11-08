@@ -12,6 +12,15 @@ class DrawBotConfig():
             # {"name": "Lora2", "path": ""},
             # {"name": "Lora3", "path": ""},
         ]
+        self.client_id = "c1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
+        
+        # 加载基础prompt配置文件
+        self.t2i_base_prompt = json.load(
+            open(os.path.join(os.path.dirname(__file__), "Api_Text2Img.json"), 'r')
+        )
+        self.i2i_base_prompt = json.load(
+            open(os.path.join(os.path.dirname(__file__), "Api_Img2Img.json"), 'r')
+        )
     
     def show_support_lora(self) -> str:
         """获取支持的 lora 列表
@@ -111,12 +120,12 @@ class UserConfig():
         """
         self.config['lora'] = DEFAULT_CONFIG['lora']
         self._save_config()
-        return [True, "已重置用户Lora配置"]
+        return "已重置用户Lora配置"
 
     def show_lora_info(self) -> str :
         """获取发送给用户显示的 lora 字符串 /now_lora
         """
-        lora_str = ""
+        lora_str = "当前用户 Lora 配置:\n"
         for i in range(len(self.config['lora'])):
             lora_info = self.config['lora'][i]
             if (lora_info['lora_strength'] > 0):
@@ -134,8 +143,8 @@ class UserConfig():
         Args:
             value (float): 设置value
         """
-        if (value <= 0 or value > 10):
-            return False, "引导参数不合法"
+        if (value <= 0 or value >= 10):
+            return False, "引导参数不合法, 范围 (0, 10) "
         self.config['k_sample']['guide'] = value
         self._save_config()
     
@@ -146,7 +155,7 @@ class UserConfig():
             value (int): 设置value
         """
         if (value < 5 or value > 50):
-            return False, "步长参数不合法"
+            return False, "步长参数不合法, 范围 [10, 50]"
         self.config['k_sample']['step'] = int(value)
         self._save_config()
     
@@ -158,7 +167,7 @@ class UserConfig():
             height (int): 高度
         """
         if (width < 128 or height < 128 or width > 1536 or height > 1536):
-            return False, "分辨率参数不合法"
+            return False, "分辨率参数不合法, 范围 [128, 1536]"
         self.config['k_sample']['resolution'] = [int(width), int(height)]
         self._save_config()
 
