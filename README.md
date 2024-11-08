@@ -1,7 +1,5 @@
-# qq-bot
-有人不保存云服务器的代码, 我不说是谁
-
-
+## bakabot
+上班摸鱼时候写的bot
 
 ### 框架
 mirai: https://github.com/mamoe/mirai
@@ -18,3 +16,6 @@ https://github.com/Redlnn/redbot
 幻影坦克部分
 
 https://github.com/jimieguang/colorful-tank
+
+#### 更新
+已经迁移到 Napcat + Nonebot中
