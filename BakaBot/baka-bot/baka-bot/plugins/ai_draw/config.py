@@ -1,4 +1,6 @@
 import json, os, time
+import random
+import copy
 from typing import Union
 
 # 机器人基础配置
@@ -10,8 +12,21 @@ class DrawBotConfig():
             # {"name": "Lora2", "path": ""},
             # {"name": "Lora3", "path": ""},
         ]
+    
+    def show_support_lora(self) -> str:
+        """获取支持的 lora 列表
 
-default_config = {
+        Returns:
+            str: 发送给用户的 lora 列表展示字符串
+        """
+        lora_str = "当前支持的 Lora 列表:\n"
+        for i in range(len(self.lora_list)):
+            lora_info = self.lora_list[i]
+            lora_str += f"{i}. name: {lora_info['name']}, desc: {lora_info['desc']}\n"
+        
+        return lora_str
+
+DEFAULT_CONFIG = {
     "lora": [
         {"name": "Lora0", "strength": 0, "path": ""},
         {"name": "Lora1", "strength": 0, "path": ""},
@@ -44,7 +59,7 @@ class UserConfig():
         # 检查是否存在文件, 不存在则用 default_config 创建
         if not os.path.exists(config_path):
             with open(config_path, 'w') as file:
-                json.dump(default_config, file)
+                json.dump(DEFAULT_CONFIG, file)
 
         # 读取配置
         with open(config_path, 'r') as file:
@@ -94,7 +109,7 @@ class UserConfig():
     def reset_lora(self) -> Union[bool, str]:
         """重置用户 lora 配置
         """
-        self.config['lora'] = default_config['lora']
+        self.config['lora'] = DEFAULT_CONFIG['lora']
         self._save_config()
         return [True, "已重置用户Lora配置"]
 
@@ -157,7 +172,64 @@ class UserConfig():
         self.config['noise']['seed'] = int(seed)
         self._save_config()
 
+    def get_seed(self):
+        """获取用户种子
+
+        Returns:
+            int: 种子参数
+        """
+        seed = self.config['noise']['seed']
+        if (seed < 0): # 随机种子
+            seed = random.getrandbits(64)
+
+        return int(seed)
+
     #### Prompt ####
+    
+    def generate_t2i_prompt(self, t2i_config) -> dict:
+        """根据用户之前的生成用户 Prompt text2img
+
+        Returns:
+            str: 用户 Prompt
+        """
+        user_prompt = copy.deepcopy(t2i_config['prompt'])
+
+        # lora加载器设置
+        loraLoaderInputs = user_prompt['66']['inputs']
+        apply_no = 1
+        for i in range(len(self.config['lora'])):
+            lora_info = self.config['lora'][i]
+            if (lora_info['strength'] > 0):
+                lora_key = f"lora_{apply_no}"
+                loraLoaderInputs[lora_key] = {
+                    "on": True,
+                    "lora": lora_info['path'],
+                    "strength": lora_info['strength']
+                }
+                apply_no += 1
+
+        user_prompt['66']['inputs'] = loraLoaderInputs
+        
+        # k_sample设置
+        ## step
+        user_prompt['17']['inputs']['steps'] = self.config['k_sample']['step']
+        ## guidance
+        user_prompt['36']['inputs']['guidance'] = self.config['k_sample']['guide']
+        ## resolution(latent)
+        user_prompt['78']['inputs']['width'] = self.config['k_sample']['resolution'][0]
+        user_prompt['78']['inputs']['height'] = self.config['k_sample']['resolution'][1]
+        ## noise seed
+        user_prompt['25']['inputs']['noise_seed'] = self.get_seed()
+
+        return user_prompt
+    
+    def generate_i2i_prompt(self, i2i_config) -> str:
+        """根据用户之前的生成用户 Prompt img2img
+
+        Returns:
+            str: 用户 Prompt
+        """
+        # TODO
 
 
     # def set_config(self, key, value):
