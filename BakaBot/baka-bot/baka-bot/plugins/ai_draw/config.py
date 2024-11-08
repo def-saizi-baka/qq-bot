@@ -180,6 +180,7 @@ class UserConfig():
         """
         self.config['noise']['seed'] = int(seed)
         self._save_config()
+        return True, f"已保存种子参数为: {seed}"
 
     def get_seed(self):
         """获取用户种子
@@ -192,6 +193,15 @@ class UserConfig():
             seed = random.getrandbits(64)
 
         return int(seed)
+
+    def show_setting(self):
+        show_str = "当前用户配置:\n"
+        show_str += f"引导参数: {self.config['k_sample']['guide']}\n"
+        show_str += f"步长参数: {self.config['k_sample']['step']}\n"
+        show_str += f"分辨率参数: \n"
+        show_str += f"  宽度: {self.config['k_sample']['resolution'][0]}\n"
+        show_str += f"  高度: {self.config['k_sample']['resolution'][1]}\n"
+        show_str += f"种子参数: {self.config['noise']['seed']}\n"
 
     #### Prompt ####
     

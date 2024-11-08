@@ -142,4 +142,23 @@ async def got_func(event: Event, width: Message = Arg(), height: Message = Arg()
     _success, res = userConfig.save_resolution(int(width.extract_plain_text()), int(height.extract_plain_text()))
     await set_latent.finish(res)
 
+## 设置种子
+set_seed = on_command("set_seed", priority=5, block=True)
+@set_seed.got("seed", prompt="请输入种子参数, 整数, 负数代表随机:")
+async def got_seed(seed: Message = Arg()):
+    pass
 
+@set_seed.handle()
+async def got_func(event: Event, seed: Message = Arg()):
+    user_id = event.user_id
+    userConfig = UserConfig(user_id)
+    _success, res = userConfig.set_seed(int(seed.extract_plain_text()))
+    await set_seed.finish(res)
+
+## 获取用户所有设置
+now_set = on_command("now_set", priority=5, block=True)
+@now_set.handle()
+async def handle_function(bot, event: Event):
+    user_id = event.user_id
+    userConfig = UserConfig(user_id)
+    await now_set.finish(userConfig.show_setting())
