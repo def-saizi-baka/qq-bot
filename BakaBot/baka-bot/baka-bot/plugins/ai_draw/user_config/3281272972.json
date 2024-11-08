@@ -1,0 +1,20 @@
+{
+    "lora": [
+        {
+            "name": "xxx",
+            "path": "anime_xxx.safetensor",
+            "strength": 0.5
+        }
+    ],
+    "k_sample": {
+        "guide": 3.5,
+        "step": 20,
+        "resolution": [
+            1024,
+            1024
+        ]
+    },
+    "noise": {
+        "seed": -1
+    }
+}
