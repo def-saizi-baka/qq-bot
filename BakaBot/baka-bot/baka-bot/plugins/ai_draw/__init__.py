@@ -1,11 +1,12 @@
-import random
-from nonebot import get_plugin_config, on_command, on_message
+import random, nonebot
+from nonebot import get_plugin_config, on_command
 from nonebot.adapters import Message, Event, Bot
 from nonebot.params import CommandArg, ArgPlainText, Arg
 from nonebot.plugin import PluginMetadata
 from nonebot_plugin_apscheduler import scheduler
 import os, time
 from .config import DrawBotConfig, UserConfig
+from .comfy_client import FluxClient
 import logging
 
 # 配置日志记录器
@@ -20,6 +21,18 @@ __plugin_meta__ = PluginMetadata(
 
 
 botCfg = DrawBotConfig()
+fluxClient = FluxClient(botCfg.server_address, botCfg.client_id)
+
+@scheduler.scheduled_job("cron", second="*/5", id="job_save_session")
+async def flux_client_monitor():
+    # print("flux_client_monitor: ")
+    # print(" status: ", fluxClient.status)
+    # 初始化启动
+    if fluxClient.status == "initing":
+        asyncio.create_task(fluxClient.connect())
+    # TODO 监控进程
+
+
 
 def get_owner_no(event):
     if hasattr(event, 'group_id'):
@@ -30,21 +43,21 @@ def get_owner_no(event):
 ###### 获取当前用户lora配置 ######
 now_lora = on_command("now_lora", priority=5, block=True)
 @now_lora.handle()
-async def handle_function(bot, event: Event):
+async def now_lora_handle(bot, event: Event):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     await now_lora.finish(userConfig.show_lora_info())
 
 ###### 查看当前支持的lora配置 ######
-list_lora = on_command("list_lora", priority=5, block=True)
+list_lora = on_command("list_lora", priority=5, block=True, aliases={"lora_list"})
 @list_lora.handle()
-async def handle_function(bot, event: Event):
+async def list_lora_handle(bot, event: Event):
     await now_lora.finish(botCfg.show_support_lora())
 
 ###### 重置用户lora设置 ######
 reset_lora = on_command("reset_lora", priority=5, block=True)
 @reset_lora.handle()
-async def handle_function(bot, event: Event):
+async def reset_lora_handle(bot, event: Event):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     await reset_lora.finish(userConfig.reset_lora())
@@ -54,7 +67,10 @@ set_lora = on_command("set_lora", priority=5, block=True)
 ## 获取 lora 槽位
 @set_lora.got("user_no", prompt="请输入lora槽位, 范围[0,3]")
 async def got_user_no(user_no: Message = Arg()):
-    user_no = int(user_no.extract_plain_text())
+    try:
+        user_no = int(user_no.extract_plain_text())
+    except:
+        await set_lora.reject("输入数据不是合法整数, 请重新输入lora槽位")
     if user_no < 0 or user_no > 3:
         await set_lora.reject("用户lora槽位范围[0,3]")
     return user_no
@@ -62,20 +78,28 @@ async def got_user_no(user_no: Message = Arg()):
 ## 获取 lora 编号
 @set_lora.got("lora_no", prompt=f"{botCfg.show_support_lora()}\n请输入安装lora的编号:")
 async def got_lora_no(lora_no: Message = Arg()):
-    lora_no = int(lora_no.extract_plain_text())
+    try:
+        lora_no = int(lora_no.extract_plain_text())
+    except:
+        await set_lora.reject("输入数据不是合法整数, 请重新输入lora编号")
+
     if lora_no < 0 or lora_no >= len(botCfg.lora_list):
-        await set_lora.reject(f"选择lora编号错误 + [0, {len(botCfg.lora_list) - 1}]")
+        await set_lora.reject(f"选择lora编号错误, 输入范围[0, {len(botCfg.lora_list) - 1}], 请重新输入")
 
 ## 获取 lora 强度
 @set_lora.got("lora_strength", prompt="请输入lora强度, 范围(0,1]浮点数, 为0代表关闭该槽位lora")
 async def got_lora_strength(lora_strength: Message = Arg()):
-    lora_strength = float(lora_strength.extract_plain_text())
+    try:
+        lora_strength = float(lora_strength.extract_plain_text())
+    except:
+        await set_lora.reject("输入值不是一个合法浮点数, 请重新输入lora强度")
+
     if lora_strength < 0 or lora_strength > 1:
-        await set_lora.reject("lora强度范围(0,1]")
+        await set_lora.reject("lora强度范围(0,1], 请重新输入")
 
 ## 设置 lora 配置
 @set_lora.handle()
-async def got_func(event: Event, user_no: Message = Arg(), lora_no: Message = Arg(), lora_strength: Message = Arg()):
+async def set_lora_handle(event: Event, user_no: Message = Arg(), lora_no: Message = Arg(), lora_strength: Message = Arg()):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     _, res = userConfig.set_lora(
@@ -92,13 +116,16 @@ async def got_func(event: Event, user_no: Message = Arg(), lora_no: Message = Ar
 set_guide = on_command("set_guide", priority=5, block=True)
 @set_guide.got("guide", prompt="请输入引导参数, 范围(0,10)浮点数:")
 async def got_guide(guide: Message = Arg()):
-    guide = float(guide.extract_plain_text())
+    try:
+        guide = float(guide.extract_plain_text())
+    except:
+        await set_guide.reject("非法参数, 请重新输入浮点数")
     if guide < 0 or guide > 10:
-        await set_guide.reject("引导参数范围(0,10)")
+        await set_guide.reject("引导参数范围(0,10), 请重新输入")
     
 ## 设置 k_sample 引导参数
 @set_guide.handle()
-async def got_func(event: Event, guide: Message = Arg()):
+async def set_guide_handle(event: Event, guide: Message = Arg()):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     _success, res = userConfig.save_guide(float(guide.extract_plain_text()))
@@ -108,13 +135,17 @@ async def got_func(event: Event, guide: Message = Arg()):
 set_steps = on_command("set_step", priority=5, block=True, aliases={"set_steps"})
 @set_steps.got("steps", prompt="请输入步长参数, 范围[5,50]整数:")
 async def got_steps(steps: Message = Arg()):
-    steps = int(steps.extract_plain_text())
-    if steps < 5 or steps > 50:
-        await set_steps.reject("步长参数范围[5,50]")
+    print(f'steps: {steps}')
+    try:
+        _steps = int(steps.extract_plain_text())
+    except:
+        await set_steps.reject("输入的步长不是整数, 请重新输入整数")
+    if _steps < 5 or _steps > 50:
+        await set_steps.reject("步长参数范围[5,50], 请重新输入")
 
-## 设置 k_sample 引导参数
+## 设置 k_sample 迭代步数参数
 @set_steps.handle()
-async def got_func(event: Event, steps: Message = Arg()):
+async def set_steps_handle(event: Event, steps: Message = Arg()):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     _success, res = userConfig.save_step(int(steps.extract_plain_text()))
@@ -124,19 +155,25 @@ async def got_func(event: Event, steps: Message = Arg()):
 set_latent = on_command("set_wh", priority=5, block=True, aliases={"set_latent", "set_resolution"})
 @set_latent.got("width", prompt="请输入宽度, 范围[128,1536]整数:")
 async def got_width(width: Message = Arg()):
-    width = int(width.extract_plain_text())
+    try:
+        width = int(width.extract_plain_text())
+    except:
+        await set_latent.reject("宽度参数不是整数, 请重新输入合法整数")
     if width < 128 or width > 1536:
-        await set_latent.reject("宽度范围[128,1536]")
+        await set_latent.reject("宽度范围[128,1536], 请重新输入")
 
 @set_latent.got("height", prompt="请输入高度, 范围[128,1536]整数:")
 async def got_height(height: Message = Arg()):
-    height = int(height.extract_plain_text())
+    try:
+        height = int(height.extract_plain_text())
+    except:
+        await set_latent.reject("高度参数不是整数, 请重新输入合法整数")
     if height < 128 or height > 1536:
-        await set_latent.reject("高度范围[128,1536]")
+        await set_latent.reject("高度范围[128,1536], 请重新输入")
 
 ## 设置 latent 分辨率
 @set_latent.handle()
-async def got_func(event: Event, width: Message = Arg(), height: Message = Arg()):
+async def set_latent_handle(event: Event, width: Message = Arg(), height: Message = Arg()):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     _success, res = userConfig.save_resolution(int(width.extract_plain_text()), int(height.extract_plain_text()))
@@ -146,10 +183,14 @@ async def got_func(event: Event, width: Message = Arg(), height: Message = Arg()
 set_seed = on_command("set_seed", priority=5, block=True)
 @set_seed.got("seed", prompt="请输入种子参数, 整数, 负数代表随机:")
 async def got_seed(seed: Message = Arg()):
-    pass
+    # 检查是否为数字
+    try:
+        int(seed.extract_plain_text())
+    except:
+        await set_seed.reject("种子参数必须为整数, 请重新输入")
 
 @set_seed.handle()
-async def got_func(event: Event, seed: Message = Arg()):
+async def set_seed_handle(event: Event, seed: Message = Arg()):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     _success, res = userConfig.set_seed(int(seed.extract_plain_text()))
@@ -158,7 +199,7 @@ async def got_func(event: Event, seed: Message = Arg()):
 ## 获取用户所有设置
 now_set = on_command("now_set", priority=5, block=True)
 @now_set.handle()
-async def handle_function(bot, event: Event):
+async def now_set_handle(bot, event: Event):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     await now_set.finish(userConfig.show_setting())

@@ -13,13 +13,14 @@ class DrawBotConfig():
             # {"name": "Lora3", "path": ""},
         ]
         self.client_id = "c1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
+        self.server_address = "127.0.0.1:8188"
         
         # 加载基础prompt配置文件
         self.t2i_base_prompt = json.load(
-            open(os.path.join(os.path.dirname(__file__), "Api_Text2Img.json"), 'r')
+            open(os.path.join(os.path.dirname(__file__), "Api_Text2Img.json"), 'r', encoding='utf-8')
         )
         self.i2i_base_prompt = json.load(
-            open(os.path.join(os.path.dirname(__file__), "Api_Img2Img.json"), 'r')
+            open(os.path.join(os.path.dirname(__file__), "Api_Img2Img.json"), 'r', encoding='utf-8')
         )
     
     def show_support_lora(self) -> str:
@@ -113,7 +114,7 @@ class UserConfig():
         self.config['lora'] = user_lora
         self._save_config()
 
-        return True, f"已保存用户Lora配置: {edit_lora['name']}, 强度: {lora_strength}, 槽位: {user_no}"
+        return [True, f"已保存用户Lora配置: {edit_lora['name']}, 强度: {lora_strength}, 槽位: {user_no}"]
     
     def reset_lora(self) -> Union[bool, str]:
         """重置用户 lora 配置
@@ -128,8 +129,8 @@ class UserConfig():
         lora_str = "当前用户 Lora 配置:\n"
         for i in range(len(self.config['lora'])):
             lora_info = self.config['lora'][i]
-            if (lora_info['lora_strength'] > 0):
-                lora_str += f"{i}. name: {lora_info['name']}, strength: {lora_info['lora_strength']}\n"
+            if (lora_info['strength'] > 0):
+                lora_str += f"{i}. name: {lora_info['name']}, strength: {lora_info['strength']}\n"
             else:
                 lora_str += f"{i}. name: {lora_info['name']}, strength: 未使用\n"
         return lora_str
@@ -147,6 +148,7 @@ class UserConfig():
             return False, "引导参数不合法, 范围 (0, 10) "
         self.config['k_sample']['guide'] = value
         self._save_config()
+        return [True, f"已保存引导参数为: {value}"]
     
     def save_step(self, value):
         """设置步长参数
@@ -158,6 +160,7 @@ class UserConfig():
             return False, "步长参数不合法, 范围 [10, 50]"
         self.config['k_sample']['step'] = int(value)
         self._save_config()
+        return [True, f"已保存步长参数为: {value}"]
     
     def save_resolution(self, width, height):
         """设置分辨率参数
@@ -170,6 +173,7 @@ class UserConfig():
             return False, "分辨率参数不合法, 范围 [128, 1536]"
         self.config['k_sample']['resolution'] = [int(width), int(height)]
         self._save_config()
+        return [True, f"已保存分辨率参数为: {width}x{height}"]
 
     #### noise 配置 ####
     def set_seed(self, seed):
@@ -180,7 +184,7 @@ class UserConfig():
         """
         self.config['noise']['seed'] = int(seed)
         self._save_config()
-        return True, f"已保存种子参数为: {seed}"
+        return [True, f"已保存种子参数为: {seed}"]
 
     def get_seed(self):
         """获取用户种子
@@ -202,6 +206,7 @@ class UserConfig():
         show_str += f"  宽度: {self.config['k_sample']['resolution'][0]}\n"
         show_str += f"  高度: {self.config['k_sample']['resolution'][1]}\n"
         show_str += f"种子参数: {self.config['noise']['seed']}\n"
+        return show_str
 
     #### Prompt ####
     

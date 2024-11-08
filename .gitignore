@@ -1,7 +1,8 @@
 test/*
-Bakabot/baka-bot/disable_plugins/*
 BakaBot/baka-bot/baka-bot/plugins/chatbot/chat_history
 __pycache__/
 BakaBot/baka-bot/.env.prod
 BakaBot/baka-bot/pyproject.toml
 BakaBot/baka-bot/baka-bot/plugins/chatbot/bot_config.json
+venv/
+BakaBot/baka-bot/baka-bot/disable_plugins/
