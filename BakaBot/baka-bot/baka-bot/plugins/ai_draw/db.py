@@ -82,7 +82,7 @@ class UserDataDB:
 
     async def get_task_by_prompt_id(self, prompt_id):
         async with self.db_conn.execute('''
-            SELECT task_uuid, user_id, group_id
+            SELECT task_uuid, user_id, group_id, prompt
             FROM user_tasks
             WHERE prompt_id = ?
         ''', (prompt_id,)) as cursor:
@@ -90,7 +90,8 @@ class UserDataDB:
             return {
                 'task_uuid': task[0],
                 'user_id': task[1],
-                'group_id': task[2]
+                'group_id': task[2],
+                'prompt': task[3]
             }
     
     
@@ -106,11 +107,28 @@ class UserDataDB:
     
     # 获取所有未创建的任务，以便重新创建
     async def get_pending_tasks(self):
+        return await self._get_tasks_by_status(TaskStatus.NOT_CREATED)
+    
+    # 获取所有未发送的任务
+    async def get_not_send_tasks(self):
+        return await self._get_tasks_by_status(TaskStatus.COMPLETED_NOT_SEND)
+    
+    async def _get_tasks_by_status(self, status):
         async with self.db_conn.execute('''
-            SELECT task_uuid, user_id, group_id, prompt
+            SELECT task_uuid, user_id, group_id, prompt, result_output_path, prompt_id
             FROM user_tasks
             WHERE status = ?
-        ''', (TaskStatus.NOT_CREATED,)) as cursor:
+        ''', (status,)) as cursor:
             tasks = await cursor.fetchall()
-            return tasks
+            task_list = []
+            for task in tasks:
+                task_list.append({
+                    'task_uuid': task[0],
+                    'user_id': task[1],
+                    'group_id': task[2],
+                    'prompt': task[3],
+                    'result_output_path': task[4],
+                    'prompt_id': task[5]
+                })
+            return task_list
 

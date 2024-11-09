@@ -30,7 +30,7 @@ async def flux_client_monitor():
     # print(" status: ", fluxClient.status)
     # 初始化启动
     if fluxClient.status == "initing":
-        asyncio.create_task(fluxClient.connect())
+        asyncio.create_task(fluxClient.connect(init = True))
     # TODO 监控进程
 
 
@@ -231,7 +231,7 @@ async def draw_with_prompt_handle(bot, event: Event, prompt: Message = CommandAr
         # 更新数据库
         await db.update_task_on_creation(task_uuid, add_res['prompt_id'])
 
-        await draw_with_prompt.finish(f"已成功绘图任务, 绘制完毕会主动推送\n任务ID: {task_uuid}")
+        await draw_with_prompt.finish(f"已添加绘图任务, 绘制完毕会主动推送\n任务ID: {task_uuid}")
 
 
 
@@ -240,12 +240,12 @@ def check_client_status():
     if (fluxClient.status != "running"):
         if (fluxClient.status == "stop"):
             # TODO 检查什么进程导致的服务停止
-            return [False, "任务已创建, 但有人在打电动, 游戏结束会自动拉起服务重新绘图"]
+            return [False, "有人在该GPU上打电动, 游戏结束会自动拉起服务重新绘图"]
         elif (fluxClient.status == "initing"):
-            return [False, "服务正在初始化, 但任务已创建, 初始化完成后会自动绘图"]
+            return [False, "有人在该GPU上打电动, 游戏结束会自动拉起服务重新绘图"] # "服务正在初始化, 请稍后重试"]
         elif (fluxClient.status == "starting"):
-            return [False, "服务正在连接, 但任务已创建, 启动完成后会自动绘图"]
+            return [False, "服务正在连接, 请稍后重试"]
         else:
-            return [False, "服务状态未知, 但任务已创建, 也许是出了bug, 修复后会自动绘图"]
+            return [False, "服务状态未知, 也许是出了bug, 请稍后重试"]
     else:
         return [True, ""]
