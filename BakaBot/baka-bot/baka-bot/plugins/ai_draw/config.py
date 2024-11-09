@@ -22,7 +22,10 @@ class DrawBotConfig():
         self.i2i_base_prompt = json.load(
             open(os.path.join(os.path.dirname(__file__), "Api_Img2Img.json"), 'r', encoding='utf-8')
         )
+        # 数据文件路径
         self.db_path = os.path.join(os.path.dirname(__file__), "userdata.db")
+        # flux图片生成结果路径
+        self.flux_output_path = "D:\Programs\ComfyUI_windows_portable\ComfyUI\output"
     
     def show_support_lora(self) -> str:
         """获取支持的 lora 列表
@@ -211,13 +214,13 @@ class UserConfig():
 
     #### Prompt ####
     
-    def generate_t2i_prompt(self, t2i_config) -> dict:
+    def generate_t2i_prompt(self, t2i_config, prompt) -> dict:
         """根据用户之前的生成用户 Prompt text2img
 
         Returns:
             str: 用户 Prompt
         """
-        user_prompt = copy.deepcopy(t2i_config['prompt'])
+        user_prompt = copy.deepcopy(t2i_config)
 
         # lora加载器设置
         loraLoaderInputs = user_prompt['66']['inputs']
@@ -238,8 +241,10 @@ class UserConfig():
         # k_sample设置
         ## step
         user_prompt['17']['inputs']['steps'] = self.config['k_sample']['step']
-        ## guidance
+        ## guidance && prompt
         user_prompt['36']['inputs']['guidance'] = self.config['k_sample']['guide']
+        user_prompt['36']['inputs']['clip_l'] = prompt
+        user_prompt['36']['inputs']['t5xxl'] = prompt
         ## resolution(latent)
         user_prompt['78']['inputs']['width'] = self.config['k_sample']['resolution'][0]
         user_prompt['78']['inputs']['height'] = self.config['k_sample']['resolution'][1]

@@ -208,11 +208,6 @@
       "PowerLoraLoaderHeaderWidget": {
         "type": "PowerLoraLoaderHeaderWidget"
       },
-      "lora_1": {
-        "on": true,
-        "lora": "anime_aesthetic_lora.safetensors",
-        "strength": 1
-      },
       "➕ Add Lora": "",
       "model": [
         "12",

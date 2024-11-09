@@ -22,7 +22,7 @@ __plugin_meta__ = PluginMetadata(
 
 
 botCfg = DrawBotConfig()
-fluxClient = FluxClient(botCfg.server_address, botCfg.client_id)
+fluxClient = FluxClient(botCfg)
 
 @scheduler.scheduled_job("cron", second="*/5", id="job_save_session")
 async def flux_client_monitor():
@@ -218,16 +218,22 @@ async def draw_with_prompt_handle(bot, event: Event, prompt: Message = CommandAr
     # 两个id获取
     user_id = event.user_id
     group_id = get_owner_no(event)
-    # 先创建任务
+    request_prompt = UserConfig(user_id).generate_t2i_prompt(botCfg.t2i_base_prompt, prompt)
     async with UserDataDB(botCfg.db_path) as db:
-        await db.insert_user_task(user_id, group_id, "", prompt)
-    # 检查 client 状态
-    status, msg = check_client_status()
-    if status != "running":
-        await draw_with_prompt.finish(msg)
+        # 先创建任务
+        task_uuid = await db.insert_user_task(user_id, group_id, str(request_prompt))
+        # 检查 client 状态
+        success, msg = check_client_status()
+        if not success :
+            await draw_with_prompt.finish(msg)
+        # 添加绘制任务 {'prompt_id': '1e4db8e1-e3c0-4e31-a3f2-b482b282e14c', 'number': 2, 'node_errors': {}}
+        add_res = await fluxClient.queue_prompt(request_prompt)
+        # 更新数据库
+        await db.update_task_on_creation(task_uuid, add_res['prompt_id'])
 
-    print("draw_with_prompt_handle: ", prompt, user_id)
-    await draw_with_prompt.finish("已设置绘图任务")
+        await draw_with_prompt.finish(f"已成功绘图任务, 绘制完毕会主动推送\n任务ID: {task_uuid}")
+
+
 
 
 def check_client_status():
