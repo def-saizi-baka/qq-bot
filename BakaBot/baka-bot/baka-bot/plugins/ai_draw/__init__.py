@@ -8,11 +8,12 @@ import os, time
 from .config import DrawBotConfig, UserConfig
 from .comfy_client import FluxClient
 import logging
+import asyncio
+from .db import UserDataDB
 
 # 配置日志记录器
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-import asyncio
 __plugin_meta__ = PluginMetadata(
     name="drawbot",
     description="",
@@ -203,3 +204,42 @@ async def now_set_handle(bot, event: Event):
     user_id = event.user_id
     userConfig = UserConfig(user_id)
     await now_set.finish(userConfig.show_setting())
+
+
+################## 画图任务 ########################
+draw_with_prompt = on_command("draw", priority=5, block=True)
+
+@draw_with_prompt.handle()
+async def draw_with_prompt_handle(bot, event: Event, prompt: Message = CommandArg()):
+    # 一些简单校验
+    prompt = prompt.extract_plain_text()
+    if (len(prompt) <= 0):
+        await draw_with_prompt.finish("请输入绘图引导")
+    # 两个id获取
+    user_id = event.user_id
+    group_id = get_owner_no(event)
+    # 先创建任务
+    async with UserDataDB(botCfg.db_path) as db:
+        await db.insert_user_task(user_id, group_id, "", prompt)
+    # 检查 client 状态
+    status, msg = check_client_status()
+    if status != "running":
+        await draw_with_prompt.finish(msg)
+
+    print("draw_with_prompt_handle: ", prompt, user_id)
+    await draw_with_prompt.finish("已设置绘图任务")
+
+
+def check_client_status():
+    if (fluxClient.status != "running"):
+        if (fluxClient.status == "stop"):
+            # TODO 检查什么进程导致的服务停止
+            return [False, "任务已创建, 但有人在打电动, 游戏结束会自动拉起服务重新绘图"]
+        elif (fluxClient.status == "initing"):
+            return [False, "服务正在初始化, 但任务已创建, 初始化完成后会自动绘图"]
+        elif (fluxClient.status == "starting"):
+            return [False, "服务正在连接, 但任务已创建, 启动完成后会自动绘图"]
+        else:
+            return [False, "服务状态未知, 但任务已创建, 也许是出了bug, 修复后会自动绘图"]
+    else:
+        return [True, ""]

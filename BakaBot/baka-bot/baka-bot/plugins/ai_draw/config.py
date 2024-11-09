@@ -22,6 +22,7 @@ class DrawBotConfig():
         self.i2i_base_prompt = json.load(
             open(os.path.join(os.path.dirname(__file__), "Api_Img2Img.json"), 'r', encoding='utf-8')
         )
+        self.db_path = os.path.join(os.path.dirname(__file__), "userdata.db")
     
     def show_support_lora(self) -> str:
         """获取支持的 lora 列表
