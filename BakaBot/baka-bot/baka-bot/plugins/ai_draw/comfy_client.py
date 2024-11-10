@@ -19,6 +19,7 @@ class FluxClient:
         self.status = "initing"
         self.output_path = botCfg.flux_output_path
         self.db_path = botCfg.db_path
+        self.game_name = ""
 
     async def queue_prompt(self, prompt):
         """ 添加绘制任务
@@ -30,6 +31,14 @@ class FluxClient:
                 res_data = await response.json()
                 print(f"debug: 添加绘制任务 {res_data}")
                 return res_data
+            
+    def set_gaming(self, game_name):
+        self.game_name = game_name
+        self.status = "gaming"
+    
+    def set_waiting(self):
+        self.status = "waiting"
+        self.game_name = ""
     
     async def run_recv_loop(self):
         while True:
@@ -62,9 +71,16 @@ class FluxClient:
                     task_info = await db.get_task_by_prompt_id(prompt_id)
                     prompt_dict = ast.literal_eval(task_info['prompt'])
                     seed = prompt_dict['25']['inputs']['noise_seed']
-                    await bot.call_api("send_group_msg", 
-                                    group_id=task_info['group_id'], 
-                                    message=f"[CQ:image,file=file:///{res_img_path}][CQ:at,qq={task_info['user_id']}] seed: {seed}")
+
+                    if (task_info['group_id'] != task_info['user_id']): # 群组消息
+                        await bot.call_api("send_group_msg", 
+                                        group_id=task_info['group_id'], 
+                                        message=f"[CQ:image,file=file:///{res_img_path}][CQ:at,qq={task_info['user_id']}] seed: {seed}")
+                    else: # 私人消息
+                        await bot.call_api("send_private_msg", 
+                                        user_id=task_info['user_id'], 
+                                        message=f"[CQ:image,file=file:///{res_img_path}] seed: {seed}")
+                        
                     print(f"debug: 任务完成 {prompt_id}")
                     await db.update_task_on_send(prompt_id)
                 except Exception as e: # 打印错误信息 和 traceback
@@ -83,14 +99,12 @@ class FluxClient:
                 
 
         while True:
-            try:
-                # 当处于stop状态时，不会自动重连, 等待进程监控线程检测到问题后重新拉起 ComfyUI Server
-                if (self.status == "stop"):
-                    print("ComfyClient: 已停止")
-                    await asyncio.sleep(5)
-                    continue
+            if (self.status == "gaming"):
+                print("ComfyClient: 检测到游戏进程, 等待游戏结束")
+                await asyncio.sleep(30)
+                continue
 
-                self.status = "starting"
+            try:
                 self.ws = await websockets.connect(f"ws://{self.server_address}/ws?clientId={self.client_id}")
                 print("ComfyClient: 连接成功")
                 self.status = "running"
@@ -101,14 +115,18 @@ class FluxClient:
 
             except (websockets.InvalidStatusCode, ConnectionRefusedError, ConnectionResetError, websockets.exceptions.ConnectionClosedError):
                 print("Connection failed. Retrying in 5 seconds...")
-                self.status = "waiting" # 连接失败时，设置状态为stop
                 if (self.ws): 
                     await self.ws.close()
+                    
+                if (self.status == "gaming"):
+                    await asyncio.sleep(30)
+                    continue
+
+                self.set_waiting()
                 await asyncio.sleep(5)
 
     async def close(self):
         if self.ws is not None:
-            self.status = "stop"
             await self.ws.close()
             print("ComfyClient: 连接关闭")
     

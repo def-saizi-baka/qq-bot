@@ -10,6 +10,7 @@ from .comfy_client import FluxClient
 import logging
 import asyncio
 from .db import UserDataDB
+from .proc_monitor import ProcMonitor
 
 # 配置日志记录器
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -23,15 +24,33 @@ __plugin_meta__ = PluginMetadata(
 
 botCfg = DrawBotConfig()
 fluxClient = FluxClient(botCfg)
+procMonitor = ProcMonitor(botCfg)
 
 @scheduler.scheduled_job("cron", second="*/5", id="job_save_session")
 async def flux_client_monitor():
-    # print("flux_client_monitor: ")
-    # print(" status: ", fluxClient.status)
     # 初始化启动
     if fluxClient.status == "initing":
         asyncio.create_task(fluxClient.connect(init = True))
-    # TODO 监控进程
+    # 监控进程
+    try: 
+        bot = nonebot.get_bot()
+    except:
+        return
+    
+    is_gaming, game_name = procMonitor.is_game_running()
+    is_ai_drawing = procMonitor.is_ai_drawing_running()
+    if (is_gaming and is_ai_drawing):
+        procMonitor.close_ai_drawing()
+        fluxClient.set_gaming(game_name)
+        await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到游戏进程 {game_name}, 已暂时关闭AI绘图服务")
+    
+    elif (not is_gaming and not is_ai_drawing):
+        fluxClient.set_waiting()
+        # 推送机制
+        if (time.time() > procMonitor.get_notice_time()):
+            await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到无游戏进程, 请及时重启AI绘图服务")
+            procMonitor.update_notice_time()
+
 
 
 
@@ -238,14 +257,13 @@ async def draw_with_prompt_handle(bot, event: Event, prompt: Message = CommandAr
 
 def check_client_status():
     if (fluxClient.status != "running"):
-        if (fluxClient.status == "stop"):
-            # TODO 检查什么进程导致的服务停止
-            return [False, "有人在该GPU上打电动, 游戏结束会自动拉起服务重新绘图"]
+        if (fluxClient.status == "waiting"):
+            return [False, "任务已保存, 服务等待重启中, 稍后重启成功后会自动处理堆积的任务"]
+        if (fluxClient.status == "gaming"):
+            return [False, f"任务已保存, 当前进行游戏 {fluxClient.game_name}, 游戏结束会自动通知管理员重启服务并重新绘图"]
         elif (fluxClient.status == "initing"):
-            return [False, "有人在该GPU上打电动, 游戏结束会自动拉起服务重新绘图"] # "服务正在初始化, 请稍后重试"]
-        elif (fluxClient.status == "starting"):
-            return [False, "服务正在连接, 请稍后重试"]
+            return [False, "任务已保存, 服务正在初始化, 稍后后会自动处理堆积的任务"]
         else:
-            return [False, "服务状态未知, 也许是出了bug, 请稍后重试"]
+            return [False, "任务已保存, 服务状态未知, 也许是出了bug, 请稍后重试"]
     else:
         return [True, ""]

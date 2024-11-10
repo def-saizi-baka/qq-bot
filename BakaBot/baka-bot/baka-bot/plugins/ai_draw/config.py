@@ -14,6 +14,7 @@ class DrawBotConfig():
         ]
         self.client_id = "c1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
         self.server_address = "127.0.0.1:8188"
+        self.admin_id = 3281272972
         
         # 加载基础prompt配置文件
         self.t2i_base_prompt = json.load(
@@ -26,6 +27,18 @@ class DrawBotConfig():
         self.db_path = os.path.join(os.path.dirname(__file__), "userdata.db")
         # flux图片生成结果路径
         self.flux_output_path = "D:\Programs\ComfyUI_windows_portable\ComfyUI\output"
+
+        # 监控相关
+        self.ai_cmd_key = 'ComfyUI\\main.py'
+
+        # 游戏进程定义
+        self.game_proc_dict = {
+            "Sinmai.exe": "Maimai DX",
+            "witcher3.exe": "Witcher3",
+            "VRChat.exe": "VRCSabbatOfTheWitchhat",
+            "SenrenBankaCHS.exe": "SenrenBanka",
+            "SabbatOfTheWitch_crack.exe": "SabbatOfTheWitch",
+        }
     
     def show_support_lora(self) -> str:
         """获取支持的 lora 列表
