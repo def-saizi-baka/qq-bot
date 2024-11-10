@@ -29,8 +29,10 @@ procMonitor = ProcMonitor(botCfg)
 @scheduler.scheduled_job("cron", second="*/5", id="flux_client_monitor")
 async def flux_client_monitor():
     # 初始化启动
-    if fluxClient.status == "initing":
+    if not botCfg.is_client_init:
         asyncio.create_task(fluxClient.connect(init = True))
+        botCfg.is_client_init = True
+        return
     # 监控进程
     try: 
         bot = nonebot.get_bot()
@@ -39,17 +41,20 @@ async def flux_client_monitor():
     
     is_gaming, game_name = procMonitor.is_game_running()
     is_ai_drawing = procMonitor.is_ai_drawing_running()
-    if (is_gaming and is_ai_drawing):
-        procMonitor.close_ai_drawing()
+    if (is_gaming):
         fluxClient.set_gaming(game_name)
-        await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到游戏进程 {game_name}, 已暂时关闭AI绘图服务")
-    
-    elif (not is_gaming and not is_ai_drawing):
-        fluxClient.set_waiting()
-        # 推送机制
-        if (time.time() > procMonitor.get_notice_time()):
-            await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到无游戏进程, 请及时重启AI绘图服务")
-            procMonitor.update_notice_time()
+        if (is_ai_drawing):
+            procMonitor.close_ai_drawing()
+            await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到游戏进程 {game_name}, 已暂时关闭AI绘图服务")
+    else:
+        if (fluxClient.status != "running"):
+            fluxClient.set_waiting()
+            if (not is_ai_drawing):
+                # 推送机制
+                if (time.time() > procMonitor.get_notice_time()):
+                    await bot.send_private_msg(user_id=botCfg.admin_id, message=f"检测到无游戏进程, 请及时重启AI绘图服务")
+                    procMonitor.update_notice_time()
+            
 
 
 

@@ -15,6 +15,7 @@ class DrawBotConfig():
         self.client_id = "c1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
         self.server_address = "127.0.0.1:8188"
         self.admin_id = 3281272972
+        self.is_client_init = False
         
         # 加载基础prompt配置文件
         self.t2i_base_prompt = json.load(
