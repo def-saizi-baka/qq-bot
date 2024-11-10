@@ -26,7 +26,7 @@ botCfg = DrawBotConfig()
 fluxClient = FluxClient(botCfg)
 procMonitor = ProcMonitor(botCfg)
 
-@scheduler.scheduled_job("cron", second="*/5", id="job_save_session")
+@scheduler.scheduled_job("cron", second="*/5", id="flux_client_monitor")
 async def flux_client_monitor():
     # 初始化启动
     if fluxClient.status == "initing":
@@ -244,7 +244,7 @@ async def draw_with_prompt_handle(bot, event: Event, prompt: Message = CommandAr
         # 检查 client 状态
         success, msg = check_client_status()
         if not success :
-            await draw_with_prompt.finish(msg)
+            await draw_with_prompt.finish(f"{msg}\n任务ID: {task_uuid}")
         # 添加绘制任务 {'prompt_id': '1e4db8e1-e3c0-4e31-a3f2-b482b282e14c', 'number': 2, 'node_errors': {}}
         add_res = await fluxClient.queue_prompt(request_prompt)
         # 更新数据库
