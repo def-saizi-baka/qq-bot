@@ -8,12 +8,15 @@ class Config(BaseModel):
     P_FORMER_KEY: str = 'YOUR_FORMER_KEY'
     POE_TOKEN: str = ""
     HISTORY_SESSION_INTERVAL: int = 60  # 会话记录保存间隔
-    ALLOWED_GROUPS: list = [             # 允许使用的群组 / 成员QQ号
-            '3281272972', 
+    ALLOWED_GROUPS: list = [             # 允许使用的群组
+            '3281272972', '206424201', '499651782', '825693798'
         ]
     # 触发概率配置
     TRIGGER_CFG: dict = {
         '3281272972': 1,
+        '206424201': 0.2,
+        '499651782': 0.2,
+        '825693798': 0.2
     }
 
 
@@ -22,6 +25,12 @@ class BotConfig():
         self.config_path = config_path
         self.bot_map = {}
         self.read_config()
+        self.mute_map = {
+            '3281272972': 0,
+            '206424201': 0,
+            '499651782': 0,
+            '825693798': 0
+        }
 
     def read_config(self):
         ''' Read config from file '''

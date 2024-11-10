@@ -46,6 +46,20 @@ def get_owner_no(event):
     else:
         return event.user_id
     
+
+mute_bot = on_command("mute_self", priority=5, block=True)
+@mute_bot.handle()
+async def handle_function(bot, event: Event, mute_second: Message = CommandArg()):
+    group_id = get_owner_no(event)
+    try:
+        mute_second = int(mute_second.extract_plain_text())
+        mute_time = time.time() + mute_second
+        bot_cfg.mute_map[str(group_id)] = mute_time
+        await mute_bot.finish(f"已禁言机器人 {mute_second} 秒")
+    except:
+        pass
+
+    
 ################################################
 #### 机器人列表逻辑
 ################################################
@@ -163,7 +177,7 @@ async def handle_function(bot: Bot, event: Event):
         await chat.send("Chatbot is busy, please wait a moment")
         return
     # 生成回复语句
-    success, res_msg = await get_chatbot_msg(chatHistory, botCgf)
+    success, res_msg = await get_chatbot_msg(chatHistory, botCgf, owner_no)
     if (success):
         await chat.finish(res_msg)
 
@@ -186,14 +200,19 @@ async def handle_function(bot, event: Event):
     chatHistory: ChatHistory = history_map[owner_no]
     chatHistory.add_message(owner_no, sender_id, event.get_plaintext())
     
-    success, res_msg = await get_chatbot_msg(chatHistory, botCgf)
+    success, res_msg = await get_chatbot_msg(chatHistory, botCgf, owner_no)
     if (success):
         await force_chat.finish(res_msg)
     else:
         await force_chat.finish("bot已掉线, 请稍后再试")
 
 # 获取机器人回复
-async def get_chatbot_msg(chatHistory: ChatHistory, botCgf):
+async def get_chatbot_msg(chatHistory: ChatHistory, botCgf, owner_no):
+    # 先检查禁言
+    mute_time = bot_cfg.mute_map[str(owner_no)]
+    if (mute_time > time.time()):
+        return True, "🤐"
+
     try:
         poeInstance.on_lock()
         request_msg = chatHistory.get_request_prompt(botCgf['prefix_prompt'])
