@@ -6,7 +6,7 @@ from nonebot.plugin import PluginMetadata
 from nonebot_plugin_apscheduler import scheduler
 import os, time
 from .config import Config, BotConfig, ChatHistory
-from .poe_bot import PoeBot
+from ..common.poe_client import PoeBot
 import logging
 
 # 配置日志记录器
@@ -22,20 +22,16 @@ __plugin_meta__ = PluginMetadata(
 
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "bot_config.json")
+POE_CLIETN_CFG = os.path.join(os.path.dirname(__file__), "poe_client.json")
 
 plugin_cfg = get_plugin_config(Config)
-tokens = {
-    'p-b': plugin_cfg.P_B_KEY,
-    'p-lat': plugin_cfg.P_LAT_KEY,
-    'formkey': plugin_cfg.P_FORMER_KEY,
-}
 bot_cfg = BotConfig(CONFIG_PATH)
 history_map = {}; # <group_id -> ChatHistory>
 
 # 同步方式初始化机器人
 print("Starting..." + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-poeInstance = PoeBot(10)
-asyncio.run(poeInstance.init(tokens))
+poeInstance = PoeBot()
+asyncio.run(poeInstance.init(POE_CLIETN_CFG))
 poeBot = poeInstance.client
 print("Client created..." + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 

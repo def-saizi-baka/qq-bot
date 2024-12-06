@@ -39,6 +39,9 @@ class DrawBotConfig():
             "VRChat.exe": "VRCSabbatOfTheWitchhat",
             "SenrenBankaCHS.exe": "SenrenBanka",
             "SabbatOfTheWitch_crack.exe": "SabbatOfTheWitch",
+            "Spice and Wolf VR.exe": "SpiceAndWolfVR",
+            "Spice and Wolf VR2.exe": "SpiceAndWolfVR2",
+            "Cyberpunk2077.exe": "Cyberpunk2077",
         }
     
     def show_support_lora(self) -> str:

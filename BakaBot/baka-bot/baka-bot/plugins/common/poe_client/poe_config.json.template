@@ -1,0 +1,9 @@
+{
+    "proxys": ["socks5://127.0.0.1:7890"],
+    "tokens": {
+        "p-b": "P_B_KEY",
+        "p-lat": "P_LAT_KEY",
+        "formkey": "P_FORMER_KEY"
+    },
+    "max_lock": 5
+}

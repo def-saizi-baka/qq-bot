@@ -3,10 +3,6 @@ import json, os, time
 
 class Config(BaseModel):
     """Plugin Config Here"""
-    P_B_KEY: str = 'YOUR_B_KEY'
-    P_LAT_KEY: str = 'YOUR_LAT_KEY'
-    P_FORMER_KEY: str = 'YOUR_FORMER_KEY'
-    POE_TOKEN: str = ""
     HISTORY_SESSION_INTERVAL: int = 60  # 会话记录保存间隔
     ALLOWED_GROUPS: list = [             # 允许使用的群组
             '3281272972', '206424201', '499651782', '825693798'

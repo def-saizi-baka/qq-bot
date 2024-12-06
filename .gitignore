@@ -6,3 +6,6 @@ BakaBot/baka-bot/pyproject.toml
 BakaBot/baka-bot/baka-bot/plugins/chatbot/bot_config.json
 venv/
 BakaBot/baka-bot/baka-bot/disable_plugins/
+
+.vscode/
+BakaBot/baka-bot/baka-bot/plugins/ai_draw/user_config/*.json
